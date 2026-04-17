@@ -2,8 +2,8 @@ name: Build and deploy ASP.Net Core app to an Azure Web App
 
 env:
   AZURE_WEBAPP_NAME: your-app-name        # <-- CHANGE THIS
-  AZURE_WEBAPP_PACKAGE_PATH: '.'          
-  DOTNET_VERSION: '8.0.x'                 # Updated to supported version
+  AZURE_WEBAPP_PACKAGE_PATH: '.'
+  DOTNET_VERSION: '8.0.x'
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up .NET
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
@@ -41,13 +41,13 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Publish
-        run: dotnet publish -c Release -o ${{ runner.temp }}/myapp --no-build
+        run: dotnet publish -c Release -o ${{ runner.temp }}/publish --no-build
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: dotnet-app
-          path: ${{ runner.temp }}/myapp
+          path: ${{ runner.temp }}/publish
 
   deploy:
     runs-on: ubuntu-latest
@@ -66,15 +66,12 @@ jobs:
         with:
           name: dotnet-app
 
-      # ✅ REQUIRED LOGIN STEP (fixes your error)
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+      # ✅ NO AZURE LOGIN STEP HERE
 
       - name: Deploy to Azure Web App
         id: deploy
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: .
